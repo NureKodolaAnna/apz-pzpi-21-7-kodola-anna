@@ -1,0 +1,34 @@
+.appointments-list {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.appointments-list h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #3D550C;
+}
+
+.appointments-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.appointments-list li {
+    border-bottom: 1px solid #ccc;
+    padding: 10px 0;
+}
+
+.appointments-list li:last-child {
+    border-bottom: none;
+}
+
+.appointments-list strong {
+    display: inline-block;
+    width: 100px;
+}
