@@ -1,0 +1,158 @@
+1  const express = require('express');
+2  const MedicalRecord = require('../models/medicalRecord');
+3  const router = express.Router();
+4  const User = require('../models/User');
+5  
+6  // Створення нового медичного запису
+7  router.post('/create', async (req, res) => {
+8      const { patient_id, doctor_id, date, time, description, diagnosis, treatment } = req.body;
+9  
+10      try {
+11          const patient = await User.findById(patient_id);
+12          const doctor = await User.findById(doctor_id);
+13  
+14          if (!patient || !doctor) {
+15              return res.status(400).json({ error: 'Invalid patient or doctor ID' });
+16          }
+17  
+18          const newMedicalRecord = new MedicalRecord({
+19              patient_id,
+20              doctor_id,
+21              date,
+22              time,
+23              description,
+24              diagnosis,
+25              treatment
+26          });
+27  
+28          await newMedicalRecord.save();
+29          res.status(201).json({ message: 'Medical record created successfully' });
+30      } catch (error) {
+31          console.error('Error creating medical record:', error);
+32          res.status(500).json({ error: 'Failed to create medical record' });
+33      }
+34  });
+35  
+36  // Оновлення існуючого медичного запису
+37  router.put('/update/:id', async (req, res) => {
+38      const { id } = req.params;
+39      const { patient_id, doctor_id, date, time, description, diagnosis, treatment } = req.body;
+40  
+41      try {
+42          const medicalRecord = await MedicalRecord.findById(id);
+43  
+44          if (!medicalRecord) {
+45              return res.status(404).json({ error: 'Medical record not found' });
+46          }
+47  
+48          if (patient_id) {
+49              const patient = await User.findById(patient_id);
+50              if (!patient) {
+51                  return res.status(400).json({ error: 'Invalid patient ID' });
+52              }
+53              medicalRecord.patient_id = patient_id;
+54          }
+55  
+56          if (doctor_id) {
+57              const doctor = await User.findById(doctor_id);
+58              if (!doctor) {
+59                  return res.status(400).json({ error: 'Invalid doctor ID' });
+60              }
+61              medicalRecord.doctor_id = doctor_id;
+62          }
+63  
+64          if (date) medicalRecord.date = date;
+65          if (time) medicalRecord.time = time;
+66          if (description) medicalRecord.description = description;
+67          if (diagnosis) medicalRecord.diagnosis = diagnosis;
+68          if (treatment) medicalRecord.treatment = treatment;
+69  
+70          await medicalRecord.save();
+71          res.status(200).json({ message: 'Medical record updated successfully' });
+72      } catch (error) {
+73          console.error('Error updating medical record:', error);
+74          res.status(500).json({ error: 'Failed to update medical record' });
+75      }
+76  });
+77  
+78  // Видалення медичного запису
+79  router.delete('/delete/:id', async (req, res) => {
+80      const { id } = req.params;
+81  
+82      try {
+83          const medicalRecord = await MedicalRecord.findById(id);
+84  
+85          if (!medicalRecord) {
+86              return res.status(404).json({ error: 'Medical record not found' });
+87          }
+88  
+89          await MedicalRecord.deleteOne({ _id: id });
+90          res.status(200).json({ message: 'Medical record deleted successfully' });
+91      } catch (error) {
+92          console.error('Error deleting medical record:', error);
+93          res.status(500).json({ error: 'Failed to delete medical record' });
+94      }
+95  });
+96  
+97  // Отримання всіх медичних записів
+98  router.get('/all', async (req, res) => {
+99      try {
+100          const medicalRecords = await MedicalRecord.find({})
+101              .populate('patient_id', 'first_name last_name')
+102              .populate('doctor_id', 'first_name last_name');
+103          res.status(200).json(medicalRecords);
+104      } catch (error) {
+105          console.error('Error fetching medical records:', error);
+106          res.status(500).json({ error: 'Failed to fetch medical records' });
+107      }
+108  });
+109  
+110  // Отримання медичного запису за його ID
+111  router.get('/:id', async (req, res) => {
+112      const { id } = req.params;
+113  
+114      try {
+115          const medicalRecord = await MedicalRecord.findById(id)
+116              .populate('patient_id', 'first_name last_name')
+117              .populate('doctor_id', 'first_name last_name');
+118  
+119          if (!medicalRecord) {
+120              return res.status(404).json({ error: 'Medical record not found' });
+121          }
+122  
+123          res.status(200).json(medicalRecord);
+124      } catch (error) {
+125          console.error('Error fetching medical record:', error);
+126          res.status(500).json({ error: 'Failed to fetch medical record' });
+127      }
+128  });
+129  
+130  // Отримання всіх медичних записів пацієнта за його ID
+131  router.get('/patient/:patient_id', async (req, res) => {
+132      const { patient_id } = req.params;
+133  
+134      try {
+135          const medicalRecords = await MedicalRecord.find({ patient_id })
+136              .populate('patient_id', 'first_name last_name')
+137              .populate('doctor_id', 'first_name last_name');
+138  
+139          if (!medicalRecords.length) {
+140              return res.status(404).json({ error: 'No medical records found for this patient' });
+141          }
+142  
+143          const recordsData = medicalRecords.map(record => ({
+144              date: record.date,
+145              time: record.time,
+146              description: record.description,
+147              diagnosis: record.diagnosis,
+148              treatment: record.treatment
+149          }));
+150  
+151          res.status(200).json(recordsData);
+152      } catch (error) {
+153          console.error('Error fetching medical records:', error);
+154          res.status(500).json({ error: 'Failed to fetch medical records' });
+155      }
+156  });
+157  
+158  module.exports = router;
